@@ -1,0 +1,42 @@
+---
+title: "Chase the Ace Analysis"
+author: "Ojan Khosravifar"
+output: html_document
+---
+
+### What is Chase the Ace?
+
+Chase the Ace is a popular card-based game of chance. The game is turn based and each turn players receive a single card. The objective is to avoid having the lowest value card. Cards are ranked from Ace to King with Ace being the lowest and King the highest. After dealing, the player to the left of the dealer has to decide whether or not to keep their card or swapping it with the player to their left. The single caveat is that players with Kings can refuse to swap, often leading to some drama! This continues all the way back to the dealer who can decide to keep their card or cut the deck to reveal their new card. The player(s) with the lowest ranking card lose a life (usually 1 of 3-5). Once that person has used up all their lives, usually from a combination of bad luck and bad decision making, they're out of the game. The last player remaining is the winner!
+
+As we can see this game requires players to determine what card is safe to keep and what card they definitely want to swap. The tricky part is, this cutoff changes as the number of players decrease. Anecdotally, with >10 players a 3 is a risk but a 4 is a sure bet you're safe. As the game continues into medium and low single digits for players, it's difficult to know where that cutoff is. 
+
+As Chase the Ace is a game of chance, we can try and create a model to find that cutoff for us based on the number of players that round. A hypergeometric distribution can be used to model our odds in this case where sampling is without replacement and the population size is relatively small. When population sizes are larger, generally >50, the hypergeometric distribution approximates the binomial distribution.
+
+Below we have the hypergeometric distribution for a game of Chase the Ace with 10 players and the odds of opposing players drawing 0 or more cards with a value lower than 4. The odds of losing is highlighted in red, with 0 cards with a value lower than 4 being drawn. By accessing the raw code, you can manually adjust the card you have drawn and the number of players to inform your decision to keep or swap the card in your hand.
+
+Good luck!
+
+```{r echo=F}
+# number of cards with lower value
+matrix <- matrix(NA, nrow = 1, ncol = 13)
+colnames(matrix) <- c("A", 2:10, "J", "Q", "K")
+matrix[1,] <- 0+4*0:12
+
+# input
+card <- "4" #in quotes
+players <- 10
+
+# dhyper(x, m, n, k)
+# card you picked as input, number of cards with higher or equal value as m
+m <- as.vector(matrix[1,card])
+k <- players #number of cards picked (players)
+x <- 0:15 #number of cards of lower value picked
+n <- 52 - m - 1 #number of cards with a equal or higher value than the card you picked; - 1 for your card
+
+hg.pdf <- dhyper(x, m, n, k)
+plot(x, hg.pdf, main="Hypergeometric PDF Distribution of Chase the Ace", ylab=paste("Probability with", players, "Players", sep = " "), xlab=paste("Number of Cards of Lower Value than", card, sep = " "), ylim=c(0,1), xlim=c(0,15.5), pch=16)
+axis(2, seq(0,1,0.1)) #adjusting y axis(2) ticks
+axis(1, seq(1,15,1)) #adjusting X axis(1) ticks
+text(hg.pdf~x, pos=4, offset=.25, cex=.6, label=round(hg.pdf,4)) #probability labels for each card
+points(0, hg.pdf[1], col="red", pch=16) #highlighting 1 (odds of losing)
+```
